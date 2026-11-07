@@ -19,6 +19,11 @@ driver used by the console.
 
 ## FreeBSD freeze
 
+> [!NOTE]
+> **Suspended since 2026-11-07**, while all teams synchronize their code: the
+> *FreeBSD freeze* check is disabled and not required. The rules below apply
+> again when it is turned back on.
+
 The FreeBSD port (`freebsd/`) and its guide
 (`console/data/docs/15-freebsd.md`) are frozen after homologation. Each
 homologated state gets a `freebsd-port-*` tag, and the latest one is the
