@@ -1,6 +1,6 @@
 ---
-# The FreeBSD port and its documentation are frozen at the tag
-# freebsd-port-2026.10.1.20261104 (see bsd/README.md). A pull request that
+# The FreeBSD port and its documentation are frozen at the latest
+# freebsd-port-* tag (see bsd/README.md). A pull request that
 # changes them fails this check, unless it carries the "freebsd-unfreeze"
 # label after the change has been agreed on.
 #
@@ -39,5 +39,5 @@ jobs:
             echo "The freebsd-unfreeze label is present: changes allowed."
             exit 0
           fi
-          echo "::error::The FreeBSD port and its documentation are frozen at tag freebsd-port-2026.10.1.20261104. Add the 'freebsd-unfreeze' label once the change is agreed on."
+          echo "::error::The FreeBSD port and its documentation are frozen at the latest freebsd-port-* tag. Add the 'freebsd-unfreeze' label once the change is agreed on."
           exit 1

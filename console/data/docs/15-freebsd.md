@@ -31,6 +31,168 @@ It installs:
   Most of it goes to Kafka and ClickHouse.
 - Network access during the build, to fetch the distribution files.
 
+For a sizing based on traffic, see the [example for a regional
+ISP](#sizing-example-regional-isp).
+
+## Sizing example: regional ISP
+
+This section sizes a single FreeBSD virtual machine running *Akvorado*, Kafka
+and ClickHouse for the following network:
+
+- about 10,000 broadband subscribers behind a BRAS chassis,
+- one border router with three IP transit providers, CDN links and Internet
+  exchange points,
+- about 30 Gbps of traffic at peak hour.
+
+The figures are estimates to plan the first deployment. Check them against the
+metrics of your own installation after a few days (see [Validate the
+sizing](#validate-the-sizing)).
+
+### Flow rate
+
+*Akvorado* stores sampled flows, so the load depends on the packet rate and the
+sampling rate, not directly on the bandwidth.
+
+| Step                         | Assumption                                                       | Result               |
+|------------------------------|------------------------------------------------------------------|----------------------|
+| Traffic sampled              | 30 Gbps entering from the Internet, ~3 Gbps leaving to it        | ~33 Gbps             |
+| Packet rate                  | ~1,100 bytes on average downstream, small packets (ACKs) upstream | ~5 Mpps at peak      |
+| Sampling                     | 1:1024 on ingress (a power of two)                               | ~5,000 samples/s     |
+| Flows at peak                | About one flow record per sample at this rate                    | **~5,000 flows/s**   |
+| Daily average                | ~55% of the peak, typical of a residential traffic curve         | ~2,700 flows/s       |
+| Flows per day                |                                                                  | **~235 million**     |
+
+This rate is low for *Akvorado*: one inlet and one outlet handle it with a few
+percent of a CPU. The exporters send a few hundred UDP packets per second, as
+each NetFlow or IPFIX packet carries tens of flows. Most of the resources go to
+ClickHouse, for storage and for the queries of the console, and to Kafka.
+
+With a sampling rate of 1:2048, divide the flow rate and the storage by two.
+With 1:512, multiply them by two.
+
+### Storage
+
+With the [default retention](50-configuration.md#clickhouse-1) (raw flows for 15
+days, 1-minute aggregates for 7 days, 5-minute aggregates for 3 months and
+1-hour aggregates for 1 year):
+
+| Data                                  | Estimate                                         | Size          |
+|---------------------------------------|--------------------------------------------------|---------------|
+| ClickHouse, raw flows (15 days)       | ~3.5 billion flows at 40 to 80 bytes each, compressed | 140 to 280 GB |
+| ClickHouse, aggregated tables         | a fraction of the raw flows                      | 50 to 150 GB  |
+| Kafka (1 day of retention)            | ~235 million flows                               | 15 to 30 GB   |
+| FreeBSD, packages, logs, port build   |                                                  | 40 GB         |
+
+The size of a flow on disk depends mostly on the AS paths and communities
+received with BMP. The ranges above are estimates. The total ranges from about
+250 GB to 500 GB. To use less disk space, reduce the retention of the raw flows,
+which take most of the space.
+
+### Virtual machine
+
+| Resource           | Minimum                        | Recommended                         |
+|--------------------|--------------------------------|-------------------------------------|
+| vCPU               | 4                              | 8                                   |
+| Memory             | 16 GB                          | 32 GB                               |
+| System disk        | 40 GB                          | 50 GB                               |
+| Data disk (SSD)    | 300 GB, with a shorter retention | 500 GB or more                    |
+| Network interface  | 1 Gbps, virtio                 | 1 Gbps, virtio                      |
+
+The recommended memory is split roughly as follows:
+
+| Component                            | Memory      |
+|--------------------------------------|-------------|
+| ClickHouse (queries, merges, caches) | 12 to 16 GB |
+| Kafka (1 GB heap and page cache)     | 3 to 4 GB   |
+| Outlet, with three full BGP views from BMP | 3 to 6 GB |
+| Orchestrator, inlet and console      | 1 GB        |
+| ZFS ARC, if ZFS is used              | 4 GB        |
+| FreeBSD                              | 1 to 2 GB   |
+
+The memory used by the outlet grows with the number of routes received through
+BMP: each transit provider sends a full view of about one million IPv4 routes
+and a few hundred thousand IPv6 routes. If you do not need AS paths and
+communities, disable them to save memory (see the [BMP
+configuration](50-configuration.md#bmp-provider)).
+
+More vCPUs mostly make the console faster on long time ranges, as ClickHouse
+then reads more data in parallel. The [CPU requirements of
+ClickHouse](10-install.md#requirements) also apply to the virtual machine:
+expose the host CPU to it (for example, the `host` CPU type in Proxmox).
+
+This sizing leaves room for the traffic to double. Beyond that, or if the BRAS
+also exports flows (see below), give more disk to the data volume first.
+
+### Virtual machine setup
+
+- Use virtio (or NVMe) network and disk devices. Emulated devices, such as
+  e1000, use more CPU.
+- Put ClickHouse (`/var/db/clickhouse`) and Kafka (`/var/db/kafka`) on the data
+  disk, separate from the system disk, so that it can grow on its own. With
+  ZFS, create a pool on the data disk (`vtbd1` here) before installing Kafka
+  and ClickHouse, then cap the ARC so that it does not compete with
+  ClickHouse, which has its own caches:
+
+  ```console
+  # zpool create data /dev/vtbd1
+  # zfs create -o atime=off -o mountpoint=/var/db/clickhouse data/clickhouse
+  # zfs create -o atime=off -o mountpoint=/var/db/kafka data/kafka
+  # sysrc -f /boot/loader.conf vfs.zfs.arc.max=4294967296
+  ```
+
+  After installing the packages, make sure the directories belong to their
+  services:
+
+  ```console
+  # chown clickhouse:clickhouse /var/db/clickhouse
+  # chown kafka:kafka /var/db/kafka
+  ```
+
+  UFS is also fine for the data disk.
+- Enable NTP (`sysrc ntpd_enable=YES ntpd_sync_on_start=YES`). The routers and
+  the virtual machine must agree on time, as flows are aggregated per minute.
+
+### Exporters
+
+For this network, configure the exporters as follows:
+
+- **Border router.** Export flows with IPFIX or NetFlow v9 (or sFlow), sampled
+  at 1:1024 on ingress, on all its interfaces: transit, Internet exchange and
+  CDN links (external), and the links to the BRAS and the core (internal).
+  Sampling on ingress on both sides counts each flow once, in both directions.
+  Use active and inactive timeouts of 10 seconds or less. Also enable SNMP for
+  the interface names and speeds, and BMP for the BGP sessions with the
+  transit providers, the route servers and the CDNs.
+- **Interface descriptions.** The classifiers use them to tell external
+  interfaces apart and to name the providers. With the sample configuration, use
+  descriptions such as `Transit: ProviderA`, `IX: ExchangeName` or `PNI:
+  CDNName`. To keep a `CDN:` prefix for CDN links, add `cdn` to the regular
+  expression in `core.interface-classifiers` in `outlet.yaml`.
+- **CDN caches inside your network.** Traffic from caches connected behind the
+  border router (to the BRAS or to a core switch) does not cross it, so the
+  border router does not see it. If the caches are connected to the border
+  router, the ingress sampling on their interfaces covers them.
+- **BRAS.** Do not export flows from the BRAS at first: the border router
+  already sees all the Internet traffic of the subscribers, and the flow rate
+  and the storage would roughly double. Exporting from the BRAS is useful to
+  see subscriber addresses behind CGNAT. In this case, give the BRAS its own
+  exporter role in `core.exporter-classifiers` and filter on it in the console
+  to avoid counting the traffic twice, and double the data disk.
+
+### Validate the sizing
+
+After a few days, compare the estimates with the real values:
+
+- flows per second, in the console, with the *flows/s* unit on the visualize
+  page;
+- dropped packets on the inlet, which must stay at zero (see the [scaling
+  guide](14-scaling.md#inlet)); on this setup, the inlet metrics are on port
+  8081;
+- disk space used per table, with the queries in the [operations
+  guide](13-operating.md#space-usage), to compute the real size of a flow and
+  the space needed for the full retention;
+- the response time of the console for one week and one month of data.
+
 ## Services and ports
 
 The sample configuration gives each service its own HTTP port. Upstream uses

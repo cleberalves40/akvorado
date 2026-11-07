@@ -20,12 +20,19 @@ driver used by the console.
 ## FreeBSD freeze
 
 The FreeBSD port (`freebsd/`) and its guide
-(`console/data/docs/15-freebsd.md`) are frozen at the tag
-`freebsd-port-2026.10.1.20261104`, after homologation. A pull request that
-changes them fails the *FreeBSD freeze* check, unless it carries the
-`freebsd-unfreeze` label once the change is agreed on. The release
-`bsd-distfiles-2026.10.1.20261104` must not change either: the port pins its
-checksum.
+(`console/data/docs/15-freebsd.md`) are frozen after homologation. Each
+homologated state gets a `freebsd-port-*` tag, and the latest one is the
+reference. A pull request that changes them fails the *FreeBSD freeze* check,
+unless it carries the `freebsd-unfreeze` label once the change is agreed on.
+After such a change is merged, tag the new state:
+
+| Tag                                   | Content                                  |
+|---------------------------------------|------------------------------------------|
+| `freebsd-port-2026.10.1.20261104`     | Port and installation guide              |
+| `freebsd-port-2026.10.1.20261104-r2`  | Adds the sizing example to the guide     |
+
+The release `bsd-distfiles-2026.10.1.20261104` must not change either: the
+port pins its checksum.
 
 The shared files in `bsd/` and the NetBSD and OpenBSD work are not frozen.
 
