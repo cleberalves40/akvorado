@@ -1,0 +1,12 @@
+--- outlet/routing/provider/bioris/root_test.go.orig
++++ outlet/routing/provider/bioris/root_test.go
+@@ -329,8 +329,7 @@
+ func TestBioRIS(t *testing.T) {
+ 	// Spawn a BMP receiver
+ 	b := server.NewBMPReceiver(server.BMPReceiverConfig{
+-		KeepalivePeriod: 10 * time.Second,
+-		AcceptAny:       true,
++		AcceptAny: true,
+ 	})
+ 	defer b.Close()
+ 	if err := b.Listen("127.0.0.1:0"); err != nil {

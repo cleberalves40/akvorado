@@ -1,6 +1,6 @@
 # OpenBSD Port Work Status
 
-Updated: 2026-11-06
+Updated: 2026-11-07
 
 See also [../bsd/README.md](../bsd/README.md) for what the three BSD ports
 share: the generated-assets distfile, configuration adaptations and the smoke
@@ -30,6 +30,24 @@ test.
   setup.
 - **Architectures.** `ONLY_FOR_ARCHS = amd64 aarch64`. The other
   architectures fail on `modernc.org/libc`.
+
+## Additional VM Verification (2026-11-07)
+
+- On OpenBSD 8.0/amd64, a clean test run against pinned source commit
+  `472d8382d88e61f5181c13880b02e2808480075c` passed 57 Go packages with zero
+  failures. It excluded only source-tree `livefs` subtests and used
+  `-trimpath=false` so tests could locate fixtures through `runtime.Caller()`.
+- This run used an earlier, single-binary test-port draft and a local
+  checksum-verified generated-assets archive containing 22 files, including
+  the test-only `mock_driver.go`. The shared production assets distfile
+  intentionally excludes that test mock, and the checked-in port's current
+  `do-test` target remains limited to the UDP and SCTP input packages.
+- `make package install` also returned success on that earlier draft; its
+  installed `akvorado version` reported OpenBSD/amd64 and Go 1.27.1. That draft
+  installed `akvorado` and `helper` only, so this does not validate the current
+  multi-service package, rc scripts, or PLIST.
+- The port now carries OpenBSD patches for the ENDBR64 test instruction,
+  optional BMP TCP keepalive configuration, and the BioRIS test fixture.
 
 ## Still to do on the OpenBSD VM
 
