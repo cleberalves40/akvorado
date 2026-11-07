@@ -12,15 +12,39 @@ upstream source and auxiliary distfile:
 The architecture limits come from `modernc.org/libc`, pulled by the SQLite
 driver used by the console.
 
-Only the FreeBSD port is documented for users, in
-[Install on FreeBSD](../console/data/docs/15-freebsd.md). The NetBSD and
-OpenBSD installation guides are drafts in [`drafts/`](drafts/) until their
-packages are validated with the native tools.
-
 - Version: `2026.10.1.20261104`
 - Source: [akvorado/akvorado](https://github.com/akvorado/akvorado) at
   commit `472d8382d88e61f5181c13880b02e2808480075c` (upstream `main`
   after the `v2026.10.1` release).
+
+## FreeBSD freeze
+
+The FreeBSD port (`freebsd/`) and its guide
+(`console/data/docs/15-freebsd.md`) are frozen at the tag
+`freebsd-port-2026.10.1.20261104`, after homologation. A pull request that
+changes them fails the *FreeBSD freeze* check, unless it carries the
+`freebsd-unfreeze` label once the change is agreed on. The release
+`bsd-distfiles-2026.10.1.20261104` must not change either: the port pins its
+checksum.
+
+The shared files in `bsd/` and the NetBSD and OpenBSD work are not frozen.
+
+The `main` branch is protected so that the teams working on each port do not
+step on each other:
+
+- every change goes through a pull request, including for administrators;
+- the branch of a pull request must be up to date with `main` before merging,
+  so that it is tested with the work already merged by the other teams;
+- the *FreeBSD freeze* check, the Go tests and the build and smoke test on
+  FreeBSD, NetBSD and OpenBSD must pass;
+- force pushes and deletion of `main` are refused.
+
+## Documentation
+
+Only the FreeBSD port is documented for users, in
+[Install on FreeBSD](../console/data/docs/15-freebsd.md). The NetBSD and
+OpenBSD installation guides are drafts in [`drafts/`](drafts/) until their
+packages are validated with the native tools.
 
 ## Generated files distfile
 
