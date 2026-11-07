@@ -5,6 +5,22 @@ with interface names (using SNMP), geo information (using IPinfo.io), and
 exports them to ClickHouse. It also exposes a web interface to browse the
 collected data.
 
+> [!NOTE]
+> **About this fork.** This repository is a fork of
+> [akvorado/akvorado](https://github.com/akvorado/akvorado) that adds a FreeBSD
+> port of *Akvorado*. The application source is unchanged: the port builds
+> upstream commit
+> [`472d8382`](https://github.com/akvorado/akvorado/commit/472d8382d88e61f5181c13880b02e2808480075c).
+>
+> - Port: [`freebsd/ports/net-mgmt/akvorado`](freebsd/ports/net-mgmt/akvorado),
+>   not yet in the official FreeBSD ports tree.
+> - Installation guide: [Install on FreeBSD](console/data/docs/15-freebsd.md).
+> - Packaging notes and smoke test: [`bsd/`](bsd/README.md).
+> - CI: [![Fork build status](https://img.shields.io/github/actions/workflow/status/cleberalves40/akvorado/ci.yml?branch=main&style=flat-square&label=fork%20CI)](https://github.com/cleberalves40/akvorado/actions/workflows/ci.yml)
+>   builds the port sources and runs a smoke test on FreeBSD.
+>
+> Report problems with the port to this fork's maintainers, not upstream.
+
 ![Timeseries graph](console/data/docs/timeseries.png)
 
 ![Sankey graph](console/data/docs/sankey.png)
