@@ -1,0 +1,7 @@
+# GitHub logins of the team in charge of the FreeBSD port, one per line.
+#
+# Only them can change the frozen FreeBSD files: the author of the pull
+# request and whoever adds the "freebsd-unfreeze" label must be listed here.
+# The list is read from the base branch, so a pull request cannot add its
+# own author. This file is itself frozen.
+cleberalves40

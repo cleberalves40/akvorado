@@ -1,14 +1,19 @@
 ---
 # The FreeBSD port and its documentation are frozen at the latest
-# freebsd-port-* tag (see bsd/README.md). A pull request that
-# changes them fails this check, unless it carries the "freebsd-unfreeze"
-# label after the change has been agreed on.
+# freebsd-port-* tag (see bsd/README.md). Only the FreeBSD maintainers listed
+# in .github/freebsd-maintainers can change them: a pull request that changes
+# a frozen file passes this check only when its author is a maintainer and a
+# maintainer added the "freebsd-unfreeze" label.
 #
 # The check runs on every pull request, and passes when no frozen file
 # changed, so that it can be a required status check of the main branch.
+#
+# pull_request_target runs this file as it is on the base branch, so a pull
+# request cannot change the check that applies to it. It never checks out
+# or runs code from the pull request: it only reads metadata from the API.
 name: FreeBSD freeze
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, labeled, unlabeled]
 permissions: {}
 jobs:
@@ -16,28 +21,56 @@ jobs:
     name: 🧊 FreeBSD port freeze
     runs-on: ubuntu-latest
     permissions:
+      contents: read
+      issues: read
       pull-requests: read
     steps:
-      - name: Refuse changes to the frozen FreeBSD port
+      - name: Only the FreeBSD maintainers may change the frozen files
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
           PR: ${{ github.event.pull_request.number }}
-          UNFREEZE: ${{ contains(github.event.pull_request.labels.*.name, 'freebsd-unfreeze') }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
+          set -eu
           files=$(gh api --paginate "repos/$REPO/pulls/$PR/files" \
             --jq '.[] | .filename, (.previous_filename // empty)')
           frozen=$(printf '%s\n' "$files" \
-            | grep -E '^(freebsd/|console/data/docs/15-freebsd\.md$)' | sort -u || true)
+            | grep -E '^(freebsd/|console/data/docs/15-freebsd\.md$|\.github/workflows/freebsd-freeze\.yml$|\.github/freebsd-maintainers$)' \
+            | sort -u || true)
           if [ -z "$frozen" ]; then
             echo "No frozen file changed."
             exit 0
           fi
           echo "Frozen files changed by this pull request:"
           echo "$frozen"
-          if [ "$UNFREEZE" = "true" ]; then
-            echo "The freebsd-unfreeze label is present: changes allowed."
-            exit 0
+
+          # The maintainers come from the base branch, never from the pull
+          # request. Without the file, only the repository owner is one.
+          if raw=$(gh api -H "Accept: application/vnd.github.raw" \
+                "repos/$REPO/contents/.github/freebsd-maintainers?ref=$BASE_SHA" 2> /dev/null); then
+            maintainers=$(printf '%s\n' "$raw" | sed -e 's/#.*//' -e 's/[[:space:]]//g' | grep -v '^$' || true)
+          else
+            maintainers=$OWNER
           fi
-          echo "::error::The FreeBSD port and its documentation are frozen at the latest freebsd-port-* tag. Add the 'freebsd-unfreeze' label once the change is agreed on."
-          exit 1
+          echo "FreeBSD maintainers:" $maintainers
+          is_maintainer() { printf '%s\n' "$maintainers" | grep -qixF -- "$1"; }
+
+          if ! is_maintainer "$AUTHOR"; then
+            echo "::error::The FreeBSD port is frozen and only the FreeBSD maintainers (.github/freebsd-maintainers) can change it. $AUTHOR is not one of them."
+            exit 1
+          fi
+          if ! gh api "repos/$REPO/issues/$PR/labels" --jq '.[].name' | grep -qxF freebsd-unfreeze; then
+            echo "::error::The FreeBSD port is frozen at the latest freebsd-port-* tag. A FreeBSD maintainer must add the 'freebsd-unfreeze' label once the change is agreed on."
+            exit 1
+          fi
+          labeler=$(gh api --paginate "repos/$REPO/issues/$PR/events" \
+            --jq '.[] | select(.event == "labeled" and .label.name == "freebsd-unfreeze") | .actor.login' \
+            | tail -n 1)
+          if [ -z "$labeler" ] || ! is_maintainer "$labeler"; then
+            echo "::error::The 'freebsd-unfreeze' label must be added by a FreeBSD maintainer (added by: ${labeler:-unknown})."
+            exit 1
+          fi
+          echo "Change by $AUTHOR, label added by $labeler: allowed."
