@@ -22,9 +22,25 @@ driver used by the console.
 The FreeBSD port (`freebsd/`) and its guide
 (`console/data/docs/15-freebsd.md`) are frozen after homologation. Each
 homologated state gets a `freebsd-port-*` tag, and the latest one is the
-reference. A pull request that changes them fails the *FreeBSD freeze* check,
-unless it carries the `freebsd-unfreeze` label once the change is agreed on.
-After such a change is merged, tag the new state:
+reference.
+
+Only the team in charge of the FreeBSD port, listed in
+`.github/freebsd-maintainers`, can change it. A pull request that changes a
+frozen file fails the *FreeBSD freeze* check unless both conditions hold:
+
+- its author is a FreeBSD maintainer;
+- a FreeBSD maintainer added the `freebsd-unfreeze` label, once the change is
+  agreed on.
+
+The frozen files are `freebsd/`, `console/data/docs/15-freebsd.md`, the check
+itself (`.github/workflows/freebsd-freeze.yml`) and the list of maintainers.
+The check runs from the base branch (`pull_request_target`), so a pull
+request cannot change the rules that apply to it, and the list of maintainers
+is always read from `main`. For the other teams, the FreeBSD port stays
+frozen.
+
+After a change to the FreeBSD port is merged, a FreeBSD maintainer tags the
+new state:
 
 | Tag                                   | Content                                  |
 |---------------------------------------|------------------------------------------|
@@ -52,6 +68,9 @@ Only the FreeBSD port is documented for users, in
 [Install on FreeBSD](../console/data/docs/15-freebsd.md). The NetBSD and
 OpenBSD installation guides are drafts in [`drafts/`](drafts/) until their
 packages are validated with the native tools.
+
+The work of each team (Craudin for FreeBSD, Copi for NetBSD and OpenBSD), its
+marks and the open items are tracked in [`BACKLOG.md`](BACKLOG.md).
 
 ## Generated files distfile
 
