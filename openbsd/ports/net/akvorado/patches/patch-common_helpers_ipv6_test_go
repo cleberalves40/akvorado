@@ -1,0 +1,20 @@
+--- common/helpers/ipv6_test.go.orig
++++ common/helpers/ipv6_test.go
+@@ -159,9 +159,16 @@
+ 	code := unsafe.Slice((*byte)(unsafe.Pointer(pc)), size)
+ 	count, padding := 0, 0
+ 	for len(code) > 0 {
++		if len(code) >= 4 && code[0] == 0xf3 && code[1] == 0x0f &&
++			code[2] == 0x1e && code[3] == 0xfa {
++			code = code[4:]
++			count++
++			continue
++		}
+ 		inst, err := x86asm.Decode(code, 64)
+ 		if err != nil {
+-			t.Fatalf("x86asm.Decode() error:\n%+v", err)
++			t.Fatalf("x86asm.Decode() error for %s (% x):\n%+v",
++				runtime.FuncForPC(pc).Name(), code[:min(len(code), 15)], err)
+ 		}
+ 		code = code[inst.Len:]
+ 		if inst.Op == x86asm.INT {

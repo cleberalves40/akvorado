@@ -1,0 +1,9 @@
+--- outlet/routing/provider/bmp/serve.go.orig
++++ outlet/routing/provider/bmp/serve.go
+@@ -73,7 +73,6 @@
+ 	if err := conn.SetKeepAlivePeriod(time.Minute); err != nil {
+ 		p.r.Err(err).Msg("unable to set keepalive period")
+-		return nil
+ 	}
+ 
+ 	// Handle panics
