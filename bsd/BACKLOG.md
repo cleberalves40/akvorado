@@ -21,7 +21,8 @@ nickname of the team that made it, so that this backlog can tell who did what.
 - After merging, add a line to the team's log below, in the same pull request
   or in the next one. Keep the open items up to date.
 - Only Craudin can change the frozen FreeBSD files (see [FreeBSD
-  freeze](README.md#freebsd-freeze)). Copi works on `pkgsrc/`, `openbsd/` and
+  freeze](README.md#freebsd-freeze)). The freeze is suspended since
+  2026-11-07, while the teams synchronize their code. Copi works on `pkgsrc/`, `openbsd/` and
   `bsd/drafts/`. Changes to the shared files in `bsd/` and to the CI should be
   announced to the other team.
 
@@ -38,6 +39,7 @@ nickname of the team that made it, so that this backlog can tell who did what.
 | 2026-11-07 | #3, #4 | Freeze check; protection of `main` (pull requests only, up-to-date branches, required checks); freeze tested with a throwaway pull request. |
 | 2026-11-07 | #5, tag `freebsd-port-2026.10.1.20261104-r2` | Sizing example for a regional ISP in the FreeBSD guide. |
 | 2026-11-07 | #6, #8 | Only the FreeBSD maintainers can change the frozen files (`pull_request_target`, `.github/freebsd-maintainers`); team marks and this backlog. |
+| 2026-11-07 | branch protection | FreeBSD freeze suspended so that all teams can synchronize their local code: freeze check removed from the required checks and its workflow disabled. The rest of the protection of `main` is unchanged. |
 
 ### Open items
 
@@ -52,9 +54,9 @@ nickname of the team that made it, so that this backlog can tell who did what.
 
 ### Log
 
-| Date | Reference | Summary |
-|------|-----------|---------|
-|      |           |         |
+| Date       | Reference | Summary |
+|------------|-----------|---------|
+| 2026-11-07 | #7 | OpenBSD VM validation: OpenBSD patches for the ENDBR64 test instruction, optional BMP TCP keepalive and the BioRIS test fixture; 57 Go packages passed on OpenBSD 8.0/amd64 with an earlier draft of the port (see `openbsd/PORTING_STATUS.md`). Logged by Craudin. |
 
 ### Open items
 
