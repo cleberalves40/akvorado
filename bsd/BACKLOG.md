@@ -37,7 +37,7 @@ nickname of the team that made it, so that this backlog can tell who did what.
 | 2026-11-07 | tag `freebsd-port-2026.10.1.20261104` | FreeBSD port and guide frozen after homologation. |
 | 2026-11-07 | #3, #4 | Freeze check; protection of `main` (pull requests only, up-to-date branches, required checks); freeze tested with a throwaway pull request. |
 | 2026-11-07 | #5, tag `freebsd-port-2026.10.1.20261104-r2` | Sizing example for a regional ISP in the FreeBSD guide. |
-| 2026-11-07 | this pull request | Only the FreeBSD maintainers can change the frozen files; team marks and this backlog. |
+| 2026-11-07 | #6, #7 | Only the FreeBSD maintainers can change the frozen files (`pull_request_target`, `.github/freebsd-maintainers`); team marks and this backlog. |
 
 ### Open items
 
