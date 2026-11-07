@@ -3,25 +3,41 @@
 # freebsd-port-2026.10.1.20261104 (see bsd/README.md). A pull request that
 # changes them fails this check, unless it carries the "freebsd-unfreeze"
 # label after the change has been agreed on.
+#
+# The check runs on every pull request, and passes when no frozen file
+# changed, so that it can be a required status check of the main branch.
 name: FreeBSD freeze
 on:
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
-    paths:
-      - freebsd/**
-      - console/data/docs/15-freebsd.md
 permissions: {}
 jobs:
   freeze:
     name: 🧊 FreeBSD port freeze
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
     steps:
       - name: Refuse changes to the frozen FreeBSD port
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'freebsd-unfreeze') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          UNFREEZE: ${{ contains(github.event.pull_request.labels.*.name, 'freebsd-unfreeze') }}
         run: |
-          echo "::error::The FreeBSD port and its documentation are frozen at tag freebsd-port-2026.10.1.20261104."
-          echo "::error::Add the 'freebsd-unfreeze' label once the change is agreed on."
+          files=$(gh api --paginate "repos/$REPO/pulls/$PR/files" \
+            --jq '.[] | .filename, (.previous_filename // empty)')
+          frozen=$(printf '%s\n' "$files" \
+            | grep -E '^(freebsd/|console/data/docs/15-freebsd\.md$)' | sort -u || true)
+          if [ -z "$frozen" ]; then
+            echo "No frozen file changed."
+            exit 0
+          fi
+          echo "Frozen files changed by this pull request:"
+          echo "$frozen"
+          if [ "$UNFREEZE" = "true" ]; then
+            echo "The freebsd-unfreeze label is present: changes allowed."
+            exit 0
+          fi
+          echo "::error::The FreeBSD port and its documentation are frozen at tag freebsd-port-2026.10.1.20261104. Add the 'freebsd-unfreeze' label once the change is agreed on."
           exit 1
-      - name: Changes to the FreeBSD port allowed by label
-        if: ${{ contains(github.event.pull_request.labels.*.name, 'freebsd-unfreeze') }}
-        run: echo "freebsd-unfreeze label present, changes allowed."

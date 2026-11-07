@@ -29,6 +29,16 @@ checksum.
 
 The shared files in `bsd/` and the NetBSD and OpenBSD work are not frozen.
 
+The `main` branch is protected so that the teams working on each port do not
+step on each other:
+
+- every change goes through a pull request, including for administrators;
+- the branch of a pull request must be up to date with `main` before merging,
+  so that it is tested with the work already merged by the other teams;
+- the *FreeBSD freeze* check, the Go tests and the build and smoke test on
+  FreeBSD, NetBSD and OpenBSD must pass;
+- force pushes and deletion of `main` are refused.
+
 ## Documentation
 
 Only the FreeBSD port is documented for users, in
