@@ -61,6 +61,12 @@ The second option is to download a pre-built binary from the [release page
 on GitHub](https://github.com/akvorado/akvorado/releases).
 Currently, only a pre-built binary for Linux x86-64 is provided.
 
+## FreeBSD port
+
+On FreeBSD, build and install *Akvorado* from the `net-mgmt/akvorado` port
+maintained in this fork. It installs both binaries, rc.d scripts and a sample
+configuration for a single host. See [Install on FreeBSD](15-freebsd.md).
+
 ## Compilation from source
 
 You need to install [Go](https://go.dev/doc/install) (1.21+), and

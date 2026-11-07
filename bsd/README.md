@@ -12,6 +12,11 @@ upstream source and auxiliary distfile:
 The architecture limits come from `modernc.org/libc`, pulled by the SQLite
 driver used by the console.
 
+Only the FreeBSD port is documented for users, in
+[Install on FreeBSD](../console/data/docs/15-freebsd.md). The NetBSD and
+OpenBSD installation guides are drafts in [`drafts/`](drafts/) until their
+packages are validated with the native tools.
+
 - Version: `2026.10.1.20261104`
 - Source: [akvorado/akvorado](https://github.com/akvorado/akvorado) at
   commit `472d8382d88e61f5181c13880b02e2808480075c` (upstream `main`
