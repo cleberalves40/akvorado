@@ -1,0 +1,27 @@
+---
+# The FreeBSD port and its documentation are frozen at the tag
+# freebsd-port-2026.10.1.20261104 (see bsd/README.md). A pull request that
+# changes them fails this check, unless it carries the "freebsd-unfreeze"
+# label after the change has been agreed on.
+name: FreeBSD freeze
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    paths:
+      - freebsd/**
+      - console/data/docs/15-freebsd.md
+permissions: {}
+jobs:
+  freeze:
+    name: 🧊 FreeBSD port freeze
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refuse changes to the frozen FreeBSD port
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'freebsd-unfreeze') }}
+        run: |
+          echo "::error::The FreeBSD port and its documentation are frozen at tag freebsd-port-2026.10.1.20261104."
+          echo "::error::Add the 'freebsd-unfreeze' label once the change is agreed on."
+          exit 1
+      - name: Changes to the FreeBSD port allowed by label
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'freebsd-unfreeze') }}
+        run: echo "freebsd-unfreeze label present, changes allowed."
